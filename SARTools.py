@@ -302,6 +302,23 @@ def readGeoTiffasRGB(path):
     image = np.dstack((r, g, b))
     return image, bounds
 
+def readGeoTiffsentinel2(path):
+    # open the georaster and extract it's bands
+    with rio.open(path) as geoimage:
+        b = geoimage.read(1)
+        g = geoimage.read(2)
+        r = geoimage.read(3)
+        re1 = geoimage.read(4)
+        re2 = geoimage.read(5)
+        re3 = geoimage.read(6)
+        nir = geoimage.read(7)
+        re4 = geoimage.read(8)
+        swir1 = geoimage.read(9)
+        swir2 = geoimage.read(10)
+        # convert the geo raster to numpy and plot
+    image = np.dstack((b, g, r, re1, re2, re3, nir, re4, swir1, swir2))
+    return image
+
 
 def cm_to_inch(value):
     return value / 2.54
