@@ -302,6 +302,7 @@ def readGeoTiffasRGB(path):
     image = np.dstack((r, g, b))
     return image, bounds
 
+
 def readGeoTiffsentinel2(path):
     # open the georaster and extract it's bands
     with rio.open(path) as geoimage:
@@ -318,6 +319,19 @@ def readGeoTiffsentinel2(path):
         # convert the geo raster to numpy and plot
     image = np.dstack((b, g, r, re1, re2, re3, nir, re4, swir1, swir2))
     return image
+
+
+def window(seq, n=2):
+    from itertools import islice
+    "Returns a sliding window (of width n) over data from the iterable"
+    "   s -> (s0,s1,...s[n-1]), (s1,s2,...,sn), ...                   "
+    it = iter(seq)
+    result = tuple(islice(it, n))
+    if len(result) == n:
+        yield result
+    for elem in it:
+        result = result[1:] + (elem,)
+        yield result
 
 
 def cm_to_inch(value):
