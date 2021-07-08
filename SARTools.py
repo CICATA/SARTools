@@ -8,7 +8,7 @@ ee.Initialize()
 
 
 # detect changes in SAR images using Cantys' method
-def CalculateCantyDifference(point, start_date, end_date, file_path, file_name, orbit='ASCENDING', areaM2=1e6,
+def CalculateCantyDifference(start_date, end_date, file_path, file_name, poly, orbit='ASCENDING',
                              export=False,
                              sum_values=True):
     from canty.eeWishart import omnibus
@@ -16,13 +16,7 @@ def CalculateCantyDifference(point, start_date, end_date, file_path, file_name, 
     # convert the point to a square
     # poly = ee.Geometry.Point(point).buffer(ee.Number(areaM2).sqrt().divide(2), 1).bounds()
 
-    cdmx = [[-99.36474798409222, 19.04840783579758],
-            [-98.95104406563519, 19.04840783579758],
-            [-98.95104406563519, 19.593513079672984],
-            [-99.36474798409222, 19.593513079672984],
-            [-99.36474798409222, 19.04840783579758]]
-
-    poly = ee.Geometry.Polygon(cdmx)
+    poly = ee.Geometry.Polygon(poly)
 
     coords = ee.List(poly.bounds().coordinates().get(0))
 
@@ -78,77 +72,6 @@ def CalculateCantyDifference(point, start_date, end_date, file_path, file_name, 
 
 def clip_ImageCollection(image, poly):
     return image.clip(poly)
-
-
-def CalculateCantyDifference_composite(point, start_date, end_date, file_path, file_name, orbit='ASCENDING', areaM2=1e6,
-                                       export=False,
-                                       sum_values=True):
-    from canty.eeWishart import omnibus
-
-    # convert the point to a square
-    poly = ee.Geometry.Point(point).buffer(ee.Number(areaM2).sqrt().divide(2), 1).bounds()
-
-    sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD') \
-        .filterBounds(poly) \
-        .filterDate(ee.Date(start_date), ee.Date(end_date)) \
-        .filter(ee.Filter.eq('resolution_meters', 10))
-
-    vh = sentinel1. \
-        filter(ee.Filter.eq('transmitterReceiverPolarisation', 'VV')). \
-        filter(ee.Filter.eq('transmitterReceiverPolarisation', 'VH')). \
-        filter(ee.Filter.eq('instrumentMode', 'IW'))
-
-    # vhAscending = vh.filter(ee.Filter.eq('orbitProperties_pass', 'ASCENDING'))
-    # vhDescending = vh.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
-
-    # composite = ee.ImageCollection.toBands(
-    # vhAscending.select('VH'),
-    # ee.ImageCollection(vhAscending.select('VV').merge(vhDescending.select('VV'))),
-    # vhDescending.select('VH')
-    # )
-    # composite = ee.Image.cat(
-    # [
-    # vhAscending.select('VH').mean(),
-    # ee.ImageCollection(vhAscending.select('VV').merge(vhDescending.select('VV'))).mean(),
-    # vhDescending.select('VH').mean()
-    # ]
-    # )
-
-    pcollection = vh
-    # pcollection = composite.map(get_vvvh)
-    pList = pcollection.toList(100)
-    first = ee.Dictionary({'imlist': ee.List([]), 'poly': poly, 'enl': ee.Number(4.4)})
-    imList = ee.Dictionary(pList.iterate(clipList, first)).get('imlist')
-
-    # make omnibus test for change detection
-    result = ee.Dictionary(omnibus(imList, useQ=True))
-
-    result = ee.Image(result.get('cmap')).byte().clip(poly)
-
-    if (sum_values):
-        value = result.reduceRegion(
-            reducer=ee.Reducer.sum(),
-            geometry=poly,
-            scale=10,
-            maxPixels=1e9
-        )
-        # get and return the sum of all pixel values in image
-        value = value.getInfo()
-        value = int(value['VV'])
-    else:
-        value = 0
-
-    if export:
-        gdexport = ee.batch.Export.image.toDrive(
-            result,
-            description=file_name,
-            folder=file_path,
-            maxPixels=1540907088,
-            scale=10,
-            region=poly
-        )
-        gdexport.start()
-    return value
 
 
 def CalculateCantyGAUL(point, start_date, end_date, file_path, file_name, orbit='DESCENDING', areaM2=1e6):
