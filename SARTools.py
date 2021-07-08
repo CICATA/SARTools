@@ -11,16 +11,19 @@ ee.Initialize()
 def CalculateCantyDifference(start_date, end_date, file_path, file_name, poly, orbit='ASCENDING',
                              export=False,
                              sum_values=True):
-    from canty.eeWishart import omnibus
+    from SARTools.canty.eeWishart import omnibus
+
+    poly = ee.FeatureCollection('projects/ee-vulnerability-gee4geo/assets/INEGI_Municipio_Queretaro').first().geometry()
+
 
     # convert the point to a square
     # poly = ee.Geometry.Point(point).buffer(ee.Number(areaM2).sqrt().divide(2), 1).bounds()
 
-    poly = ee.Geometry.Polygon(poly)
+    # poly = ee.Geometry.Polygon(poly)
 
     coords = ee.List(poly.bounds().coordinates().get(0))
 
-    collection = ee.ImageCollection('COPERNICUS/S1_GRD') \
+    collection = ee.ImageCollection('COPERNICUS/S1_GRD')\
         .filterBounds(ee.Geometry.Point(coords.get(0))) \
         .filterBounds(ee.Geometry.Point(coords.get(1))) \
         .filterBounds(ee.Geometry.Point(coords.get(2))) \
